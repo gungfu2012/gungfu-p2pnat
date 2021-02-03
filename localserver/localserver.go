@@ -28,6 +28,7 @@ func main() {
 		if ip.To4() == nil && ip.IsGlobalUnicast() {
 			laddr = ip.String()
 			fmt.Println(laddr)
+			break
 		}
 	}
 	//1.wss to remoteserver
@@ -40,10 +41,15 @@ func main() {
 	}
 	//2.send localserver ipv6 to remortserver
 	err = wsconn.WriteMessage(websocket.BinaryMessage, []byte(laddr))
+	if err != nil {
+		fmt.Println("send localserver ipv6 to remotrserver err : ", err)
+		return
+	}
 	//3.loop for read client ipv6:port
 	for {
 		_, recvbuf, err := wsconn.ReadMessage()
 		if err != nil {
+			fmt.Println("read client ipv6:port err : ", err)
 			continue
 		}
 		raddr := string(recvbuf)
@@ -57,16 +63,32 @@ func handleconn(raddr string) {
 	laddrp := "[" + laddr + "]:" + port
 	laddrtcp, _ := net.ResolveTCPAddr("tcp6", laddrp)
 	raddrtcp, _ := net.ResolveTCPAddr("tcp6", raddr)
-	clientconn, _ := net.DialTCP("tcp6", laddrtcp, raddrtcp)
+	clientconn, err := net.DialTCP("tcp6", laddrtcp, raddrtcp)
+	if err != nil {
+		fmt.Println("dial to client err : ", err)
+		return
+	}
 	//5.get cmd from client
 	var buf [1024]byte
-	n, _ := clientconn.Read(buf[0:1024])
+	n, err := clientconn.Read(buf[0:1024])
+	if err != nil {
+		fmt.Println("get cmd from client : ", err)
+		return
+	}
 	appport := string(buf[0:n])
 	//6.dial to local app
-	laconn, _ := net.Dial("tcp6", "127.0.0.1:" + appport)
+	laconn, err := net.Dial("tcp", "127.0.0.1:" + appport)
+	if err != nil {
+		fmt.Println("dial to local app err : ", err)
+		return
+	}
 	//7.send resp to client
 	var resp = [1]byte{0x01}
-	clientconn.Write(resp[0:1])
+	n, err = clientconn.Write(resp[0:1])
+	if err != nil {
+		fmt.Println("send resp to client err : ", err)
+		return
+	}
 	//8.go send data to localserver
 	go transdata(laconn, clientconn)
 	//9.go get data from localserver

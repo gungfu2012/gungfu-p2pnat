@@ -21,13 +21,13 @@ var port, remoteserver string
 
 func main() {
 	//get client ipv6 addr
-	Interface, _ := net.InterfaceByName("rmnet_data1")
-	addrs, _ := Interface.Addrs()
+	addrs, _ := net.InterfaceAddrs()
 	for _, addr := range addrs {
 		ip, _, _ := net.ParseCIDR(addr.String())
 		if ip.To4() == nil && ip.IsGlobalUnicast() {
 			laddr = ip.String()
 			fmt.Println(laddr)
+			break
 		}
 	}
 	//listen client port
@@ -55,14 +55,24 @@ func handleconn(conn net.Conn) {
 		fmt.Println(err)
 	}
 	//2.send client ipv6:port to remortserver
-	rand.Seed(time.Now().Unix())
+	rand.Seed(time.Now().UnixNano())
 	lport := rand.Intn(55536) + 10000
 	lportstr := strconv.Itoa(lport)
 	var sendbuf string = "[" + laddr +"]:" + lportstr
+	fmt.Println(sendbuf)
 	err = wsconn.WriteMessage(websocket.BinaryMessage, []byte(sendbuf))
+	if err != nil {
+		fmt.Println("send client ipv6:port to remoteserver err : ",err)
+		return
+	}
 	//3.get localserver ipv6 from remoteserver
 	_, recvbuf, err := wsconn.ReadMessage()
+	if err != nil {
+		fmt.Println("get localserver ipv6 from remoteserver err : ",err)
+		return
+	}
 	raddr := "[" + string(recvbuf) + "]:" + lportstr
+	fmt.Println(raddr)
 	//4.dial to localserver
 	laddrtcp, err := net.ResolveTCPAddr("tcp6", sendbuf)
 	raddrtcp, err := net.ResolveTCPAddr("tcp6", raddr)
