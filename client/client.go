@@ -78,7 +78,7 @@ func handleconn(conn net.Conn) {
 	lsconn, err := net.DialTCP("tcp6", laddrtcp, raddrtcp)
 	//5.send cmd to localserver
 	cmdport, _ := strconv.Atoi(port)
-	cmdport = cmdport - 1000
+	cmdport = cmdport - 2000
 	cmd := strconv.Itoa(cmdport)
 	lsconn.Write([]byte(cmd))
 	//6.get resp from localserver
