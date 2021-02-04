@@ -21,15 +21,14 @@ var port, remoteserver string
 
 func main() {
 	//get client ipv6 addr
-	addrs, _ := net.InterfaceAddrs()
-	for _, addr := range addrs {
-		ip, _, _ := net.ParseCIDR(addr.String())
-		if ip.To4() == nil && ip.IsGlobalUnicast() {
-			laddr = ip.String()
-			fmt.Println(laddr)
-			break
-		}
+	testconn, err := net.Dial("tcp6", "[2606:4700::6810:85e5]:443")
+	if err != nil {
+		fmt.Println("dial to cloudflare err : ", err)
+		return
 	}
+	laddr, _, _ = net.SplitHostPort(testconn.LocalAddr().String())
+	fmt.Println(laddr)
+	testconn.Close()
 	//listen client port
 	flag.StringVar(&port, "port", "1022", "default port for ssh")
 	flag.StringVar(&remoteserver, "remoteserver", "ws://127.0.0.1:8080/", "default remote server")
