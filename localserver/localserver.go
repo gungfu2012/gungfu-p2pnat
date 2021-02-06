@@ -20,6 +20,7 @@ var remoteserverpath string = "localserver"
 var remoteserver string
 
 func main() {
+	time.Sleep(30 * time.Second)
 	//get localserver ipv6 addr
 	Interface, err := net.InterfaceByName("eth0")
 	if err != nil {
