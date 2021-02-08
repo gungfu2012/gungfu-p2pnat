@@ -52,6 +52,7 @@ func handleconn(conn net.Conn) {
 	wsconn, _, err := websocket.DefaultDialer.Dial(remoteserver+remoteserverpath, nil)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 	//2.send client ipv6:port to remortserver
 	rand.Seed(time.Now().UnixNano())
@@ -80,6 +81,9 @@ func handleconn(conn net.Conn) {
 	cmdport, _ := strconv.Atoi(port)
 	cmdport = cmdport - 2000
 	cmd := strconv.Itoa(cmdport)
+	if lsconn == nil {
+		return
+	}
 	lsconn.Write([]byte(cmd))
 	//6.get resp from localserver
 	var resp [1]byte
@@ -94,6 +98,9 @@ func transdata(r, w net.Conn) {
 	const bufmax uint = 1 << 20
 	var buf [bufmax]byte
 	for {
+		if r == nil || w == nil {
+			return
+		}
 		n, err := r.Read(buf[0:bufmax])
 		if err != nil {
 			fmt.Println(err)
